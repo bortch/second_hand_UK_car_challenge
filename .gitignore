@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Avoid model dump
+*.joblib
+
+# csv files
+*.csv
