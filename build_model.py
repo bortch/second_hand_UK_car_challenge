@@ -26,9 +26,10 @@ import json
 
 from itertools import product
 
+import warnings
+import time
 import constants as cnst
 
-import warnings
 warnings.filterwarnings("ignore")
 
 
@@ -243,15 +244,18 @@ def dump_params(params, as_filename, verbose=False):
 def encode_params(params, verbose=False):
     encoded_params = {}
     for key, p in params.items():
-        for k, value in p.items():
-            if verbose:
-                print(f"{k}:{value}")
-        if isinstance(value, np.int64):
-            encoded_params[key] = int(value)
-        elif isinstance(value, np.float64):
-            encoded_params[key] = float(value)
+        if isinstance(p,dict):
+            for k, value in p.items():
+                if verbose:
+                    print(f"{k}:{value}")
+            if isinstance(value, np.int64):
+                encoded_params[key] = int(value)
+            elif isinstance(value, np.float64):
+                encoded_params[key] = float(value)
+            else:
+                encoded_params[key] = value
         else:
-            encoded_params[key] = value
+            encoded_params[key]=p
     return encoded_params
 
 def get_base_model(model_filename, X,y,ordered_categories, verbose=False):
@@ -309,7 +313,7 @@ def evaluate_params(model, params, X, y, current_score=np.Inf, verbose=False):
             # evaluate model
             if verbose:
                 print(f"Current score {grid.best_score_}, last best score {best_score}")
-            if grid.best_score_<= best_score:
+            if grid.best_score_>= best_score:
                 # there's a better score
                 model_ = grid.best_estimator_
                 best_params_dict[key] = grid.best_params_
@@ -371,7 +375,7 @@ def evaluate_combination_of_params(model, params, X_train, y_train, current_scor
         grid.fit(X_train, y_train)
         # if it is a better score
         # keep track of the optimized parameters
-        if grid.best_score_<=current_score:
+        if grid.best_score_>=current_score:
             if verbose:
                 print(f'actual best score {best_score}, better solution found:{grid.best_score_}')
             best_model = grid.best_estimator_
@@ -436,7 +440,7 @@ def get_best_estimator_params(model, X_val, y_val, score, verbose):
     _, _, estimator_score = evaluate_model(best_model, X_val, y_val, verbose=verbose)
     # if the score is better we dump the model and save the params as a json 
     # else we keep the existing one
-    if(estimator_score <= best_score):
+    if(estimator_score >= best_score):
         if verbose:
             print(f"\nBest estimator's params")
             print(f"-\t Reference score: {best_score}")
@@ -456,14 +460,21 @@ def get_best_estimator_params(model, X_val, y_val, score, verbose):
     return best_model,best_params,best_score
 
 def get_best_model(model_filename, X_train, y_train, X_val, y_val, ordered_categories, verbose=False):
+    timer_start = time.perf_counter()
     model_name = model_filename.split('.')[0]
     # Get a fitted model or create it
     model = get_base_model(model_filename, X_train, y_train, ordered_categories, verbose=verbose)
+    print(f'Model creation duration:{time.perf_counter()-timer_start } sec')
+    timer_start = time.perf_counter()
     # Evaluate score of the model using the validation test 
     _, _, ref_score = evaluate_model(model, X_val, y_val, verbose=verbose)
+    print(f'Model evaluation duration:{time.perf_counter()-timer_start } sec')
+    timer_start = time.perf_counter()
     # Search for best pipeline params
     best_model,_,pipeline_params_score = get_best_pipeline_params(model, X_val, y_val, ref_score, verbose)    
+    print(f'Best pipeline params search duration:{time.perf_counter()-timer_start } sec')
+    timer_start = time.perf_counter()
     # Search for best estimator params
-    best_model,best_params,best_score = get_best_estimator_params(best_model, X_val, y_val, pipeline_params_score, model_name,verbose)
-    
+    best_model,best_params,best_score = get_best_estimator_params(best_model, X_val, y_val, pipeline_params_score, verbose)
+    print(f"Best estimator's params search duration:{time.perf_counter()-timer_start } sec")
     return best_model,best_params,best_score

@@ -16,12 +16,11 @@ import numpy as np
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-#from sklearn.experimental import enable_iterative_imputer
+from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer, KNNImputer
 from scipy.stats import zscore
 
 import constants as cnst
-
 
 
 def get_numerical_columns(data):
@@ -133,7 +132,7 @@ def clean_variables(data, target='price', verbose=False):
     # log target
     if verbose:
         print("Replace target by Log(target)")
-    df[target] = np.log(df[target])
+    #df[target] = np.log(df[target])
     return df
 
 
@@ -204,14 +203,13 @@ def numerical_imputer(data, n_neighbors=10, weights='distance', fit_set=None, im
         print("\tImputation done?", not df.isnull().values.any())
     return df
 
-
-def save_prepared_file(df, filename):
+def save_prepared_dataset(df, filename):
     dest_file_path = join(cnst.PREPARED_DATASET_PATH, filename)
     df.to_csv(dest_file_path)
     print(f"{filename} data saved @ {dest_file_path}")
 
 
-def load_prepared_file(filename):
+def load_prepared_dataset(filename):
     file_path = join(cnst.PREPARED_DATASET_PATH, filename)
     if isfile(file_path):
         df = pd.read_csv(file_path, index_col=0)

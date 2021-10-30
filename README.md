@@ -1,2 +1,5 @@
-# second_hand_UK_car_challenge
-Kaggle UK Used Car challenge 
+# UK Used Car Challenge
+
+## Dataset
+
+Kaggle UK Used Car challenge: https://www.kaggle.com/adityadesai13/used-car-dataset-ford-and-mercedes

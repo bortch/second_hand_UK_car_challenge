@@ -20,19 +20,23 @@ def get_rmse(y_prediction,y_real, verbose=False):
 
 def evaluate_prediction(model, X, y, sample=None,add_columns=[]):
     if sample:
-        X = X.sample(n=sample, random_state=1)
-        y_log = y.sample(n=sample, random_state=1)
-    y_pred_log = model.predict(X)
+        _X = X.sample(n=sample, random_state=1)
+        _y = y.sample(n=sample, random_state=1)
+    else:
+        _X = X
+        _y = y
+    
+    y_pred = model.predict(_X)
 
-    y_pred, y, rmse = get_rmse(y_pred_log,y_log,verbose=True)
+    y_pred, _y, rmse = get_rmse(y_pred,_y,verbose=True)
 
     data = []
 
     for i in range(len(y_pred)):
         row = []
-        sample = X[i:i+1]
+        sample = _X[i:i+1]
         pred = y_pred[i:i+1][0]
-        real = int(y[i:i+1].values[0])
+        real = int(_y[i:i+1].values[0])
         error = (real-pred)
         percentage = (error/real)*100
         row.append(f"{pred:.0f}")
